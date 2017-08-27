@@ -3,14 +3,17 @@ export type Identifier = symbol;
 export type ProxyEvent =
 {
     kind: 'get',
+    id: Identifier,
     field: PropertyKey,
     success: boolean,
 } | {
     kind: 'set',
+    id: Identifier,
     field: PropertyKey,
     value: any,
 } | {
     kind: 'delete',
+    id: Identifier,
     field: PropertyKey,
     success: boolean,
 } | {
@@ -63,34 +66,37 @@ export class Context {
         }
     }
 
-    recordGet(field: PropertyKey, success: boolean) {
+    recordGet(field: PropertyKey, success: boolean, id: Identifier) {
         this.dispatch( {
             kind: 'get',
             field: field,
+            id: id,
             success: success,
         });
     }
 
-    recordSet(field: PropertyKey, value: any) {
+    recordSet(field: PropertyKey, value: any, id: Identifier) {
         this.dispatch({
             kind: 'set',
+            id: id,
             field: field,
             value: value,
         });
     }
 
-    recordDelete(field: PropertyKey, success: boolean) {
+    recordDelete(field: PropertyKey, success: boolean, id: Identifier) {
         this.dispatch({
             kind: 'delete',
             field: field,
+            id: id,
             success: success,
         });
     }
 
-    recordNewObject(identifier: Identifier) {
+    recordNewObject(id: Identifier) {
         this.dispatch({
             kind: 'new-obj',
-            id: identifier,
+            id: id,
         })
     }
 }

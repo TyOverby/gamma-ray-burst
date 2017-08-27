@@ -47,7 +47,7 @@ export function proxy_object(
 
             const v = fields.get(p);
             const success = v !== undefined;
-            context.recordGet(p, success);
+            context.recordGet(p, success, myIdent);
             if (v !== undefined && isIdentifier(v)) {
                 return context.mapping.get(v);
             }
@@ -58,16 +58,16 @@ export function proxy_object(
             // out of it, and use that instead of attempting to assimilate
             const [ident, object] = assimilate(context, value);
             fields.set(p, ident);
-            context.recordSet(p, object);
+            context.recordSet(p, object, myIdent);
             return true;
         },
         deleteProperty(target: any, p: PropertyKey): boolean {
             if (fields.has(p)) {
                 fields.delete(p);
-                context.recordDelete(p, true);
+                context.recordDelete(p, true, myIdent);
                 return true;
             } else {
-                context.recordDelete(p, false);
+                context.recordDelete(p, false, myIdent);
                 return false;
             }
         },
@@ -89,5 +89,6 @@ export function proxy_object(
             throw "NOT YET IMPLEMENTED";
         }
     });
+
     return proxy;
 }
