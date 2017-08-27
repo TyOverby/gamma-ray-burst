@@ -4,6 +4,16 @@ const identifier_secret = Symbol();
 
 export type Identifier = string;
 
+export type Value = number | string;
+
+export type IdentifierOrValue = {
+    type: 'identifier',
+    id: Identifier,
+} | {
+    type: 'value',
+    value: Value,
+};
+
 export function createIdentifier(): Identifier {
     return uuid.v4();
 }
@@ -18,7 +28,7 @@ export type ProxyEvent =
     kind: 'set',
     id: Identifier,
     field: PropertyKey,
-    value: any,
+    value: IdentifierOrValue,
 } | {
     kind: 'delete',
     id: Identifier,
@@ -28,8 +38,6 @@ export type ProxyEvent =
     kind: 'new-obj',
     id: Identifier
 };
-
-export type Value = number | string;
 
 export const trackingSymbol = Symbol();
 
@@ -74,7 +82,7 @@ export class Context {
         });
     }
 
-    recordSet(field: PropertyKey, value: any, id: Identifier) {
+    recordSet(field: PropertyKey, value: IdentifierOrValue, id: Identifier) {
         this.dispatch({
             kind: 'set',
             id: id,

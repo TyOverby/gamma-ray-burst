@@ -5,17 +5,11 @@ import {
     trackingSymbol,
     isTracked,
     getIdentifier,
+    IdentifierOrValue,
 } from "./context";
 
-type AssimilateFunc = (ctx: Context, value: any) => [IdentifierOrValue, any];
+type AssimilateFunc = (ctx: Context, value: any) => IdentifierOrValue;
 
-export type IdentifierOrValue = {
-    type: 'identifier',
-    id: Identifier,
-} | {
-    type: 'value',
-    value: Value,
-};
 
 export function proxy_object(
     context: Context,
@@ -69,9 +63,9 @@ export function proxy_object(
         set(target: any, p: PropertyKey, value: any, receiver: any): boolean {
             // If we are already tracking this object, just get the identifier
             // out of it, and use that instead of attempting to assimilate
-            const [ident, object] = assimilate(context, value);
+            const ident = assimilate(context, value);
             fields.set(p, ident);
-            context.recordSet(p, object, myIdent);
+            context.recordSet(p, ident, myIdent);
             return true;
         },
         deleteProperty(target: any, p: PropertyKey): boolean {

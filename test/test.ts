@@ -2,6 +2,20 @@ import * as mocha from 'mocha';
 import * as grb from '../src/grb';
 import { expect } from 'chai';
 
+function raw_val(v: number | string): grb.IdentifierOrValue {
+    return {
+        type: 'value',
+        value: v
+    }
+}
+
+function id_val(v: grb.Identifier): grb.IdentifierOrValue {
+    return {
+        type: 'identifier',
+        id: v
+    }
+}
+
 describe('reflected object', () => {
     it('should be able to have properties added to it', () => {
         const [ctx, obj] = grb.room();
@@ -14,7 +28,7 @@ describe('reflected object', () => {
         const obj_id = grb.getIdentifier(obj);
 
         expect(evts).to.deep.equal([
-            { kind: 'set', field: 'x', value: 5, id: obj_id },
+            { kind: 'set', field: 'x', value: raw_val(5), id: obj_id },
         ]);
     });
 
@@ -30,8 +44,8 @@ describe('reflected object', () => {
         const obj_id = grb.getIdentifier(obj);
 
         expect(evts).to.deep.equal([
-            { kind: 'set', field: 'x', value: 5, id: obj_id },
-            { kind: 'set', field: 'x', value: 10, id: obj_id },
+            { kind: 'set', field: 'x', value: raw_val(5), id: obj_id },
+            { kind: 'set', field: 'x', value: raw_val(10), id: obj_id },
         ]);
     });
 
@@ -48,9 +62,9 @@ describe('reflected object', () => {
 
         expect(evts).to.deep.equal([
             { kind: 'new-obj', id: x_id },
-            { kind: 'set', field: 'a', value: 10, id: x_id },
-            { kind: 'set', field: 'b', value: 30, id: x_id },
-            { kind: 'set', field: 'x', value: { a: 10, b: 30}, id: obj_id },
+            { kind: 'set', field: 'a', value: raw_val(10), id: x_id },
+            { kind: 'set', field: 'b', value: raw_val(30), id: x_id },
+            { kind: 'set', field: 'x', value: id_val(x_id), id: obj_id },
         ]);
     });
 
@@ -71,11 +85,11 @@ describe('reflected object', () => {
         expect(evts).to.deep.equal([
             { kind: "new-obj", id: n_id },
             { kind: "new-obj", id: o_id },
-            { field: "a",  kind: "set", value: 10, id: o_id },
-            { field: "b",  kind: "set", value: 30, id: o_id, },
-            { field: "o1", kind: "set", value: { "a": 10, "b": 30, }, id: n_id },
-            { field: "o2", kind: "set", value: { "a": 10, "b": 30, }, id: n_id },
-            { field: "n",  kind: "set", value: { "o1": { "a": 10, "b": 30, }, "o2": { "a": 10, "b": 30, }, }, id: obj_id }
+            { field: "a",  kind: "set", value: raw_val(10), id: o_id },
+            { field: "b",  kind: "set", value: raw_val(30), id: o_id, },
+            { field: "o1", kind: "set", value: id_val(o_id), id: n_id },
+            { field: "o2", kind: "set", value: id_val(o_id), id: n_id },
+            { field: "n",  kind: "set", value: id_val(n_id), id: obj_id }
         ]);
     });
 
@@ -112,11 +126,11 @@ describe('reflected object', () => {
 
         expect(evts).to.deep.equal([
             { kind: "new-obj", id: x_id },
-            { field: "a", kind: "set", value: 10, id: x_id },
-            { field: "b", kind: "set", value: 20, id: x_id },
-            { field: "x", kind: "set", value: { a: 10, b: 20, }, id: obj_id },
+            { field: "a", kind: "set", value: raw_val(10), id: x_id },
+            { field: "b", kind: "set", value: raw_val(20), id: x_id },
+            { field: "x", kind: "set", value: id_val(x_id), id: obj_id },
             { field: "x", kind: "get", success: true, id: obj_id },
-            { field: "y", kind: "set", value: { a: 10, b: 20, }, id: obj_id }
+            { field: "y", kind: "set", value: id_val(x_id), id: obj_id }
         ]);
     });
 
@@ -130,5 +144,24 @@ describe('reflected object', () => {
         expect(obj.x.a).to.equal(obj.y.a);
         expect(obj.x.a).to.equal(300);
         expect(obj.y.a).to.equal(300);
+    });
+
+    it('should delete fields successfully', () => {
+        const [ctx, obj] = grb.room();
+        const evts: grb.ProxyEvent[] = [];
+        const cancel_listener = ctx.addListener((event) => evts.push(event));
+
+        obj.x = 5;
+        delete obj.x;
+
+        cancel_listener();
+        const obj_id = grb.getIdentifier(obj);
+
+        expect(obj.x).to.be.equal(undefined);
+
+        expect(evts).to.be.deep.equal([
+            { kind: "set", id: obj_id, field: 'x', value: raw_val(5) },
+            { kind: "delete", id: obj_id, field: 'x', success: true},
+        ])
     });
 });
