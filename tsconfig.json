@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "module": "commonjs",
+        "target": "es2016",
+        "alwaysStrict": true,
+        "strictNullChecks": true,
+        "newLine": "LF",
+        "jsx": "react"
+    }
+}
