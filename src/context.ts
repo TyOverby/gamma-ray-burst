@@ -1,4 +1,12 @@
-export type Identifier = symbol;
+import * as uuid from 'uuid';
+
+const identifier_secret = Symbol();
+
+export type Identifier = string;
+
+export function createIdentifier(): Identifier {
+    return uuid.v4();
+}
 
 export type ProxyEvent =
 {
@@ -27,17 +35,8 @@ export const trackingSymbol = Symbol();
 
 interface Tracked { };
 
-export function isIdentifier(v: Identifier | Value): v is Identifier {
-    return typeof v === 'symbol';
-}
-
 export function isTracked(o: any): o is Tracked {
-    let s = o[trackingSymbol];
-    if (isIdentifier(s)) {
-        return true;
-    } else {
-        return false;
-    }
+    return o[trackingSymbol] !== undefined;
 }
 
 export function getIdentifier(o: Tracked): Identifier {

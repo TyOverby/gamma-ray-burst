@@ -2,20 +2,27 @@ import {
     Context,
     Identifier,
     Value,
-    isIdentifier,
     trackingSymbol,
     isTracked,
     getIdentifier,
 } from "./context";
 
-type AssimilateFunc = (ctx: Context, value: any) => [Identifier | Value, any];
+type AssimilateFunc = (ctx: Context, value: any) => [IdentifierOrValue, any];
+
+export type IdentifierOrValue = {
+    type: 'identifier',
+    id: Identifier,
+} | {
+    type: 'value',
+    value: Value,
+};
 
 export function proxy_object(
     context: Context,
     assimilate: AssimilateFunc,
     myIdent: Identifier) {
 
-    const fields = new Map<PropertyKey, Identifier | Value>();
+    const fields = new Map<PropertyKey, IdentifierOrValue>();
     context.recordNewObject(myIdent);
 
     var proxy = new Proxy({}, {
@@ -48,10 +55,16 @@ export function proxy_object(
             const v = fields.get(p);
             const success = v !== undefined;
             context.recordGet(p, success, myIdent);
-            if (v !== undefined && isIdentifier(v)) {
-                return context.mapping.get(v);
+
+            if (v === undefined) {
+                return undefined;
             }
-            return v;
+
+            if (v.type == 'identifier') {
+                return context.mapping.get(v.id);
+            } else {
+                return v.value;
+            }
         },
         set(target: any, p: PropertyKey, value: any, receiver: any): boolean {
             // If we are already tracking this object, just get the identifier

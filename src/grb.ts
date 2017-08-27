@@ -1,5 +1,5 @@
-import { Context, Identifier, isTracked, getIdentifier, Value } from './context';
-import { proxy_object } from './object';
+import { Context, Identifier, isTracked, getIdentifier, Value, createIdentifier } from './context';
+import { proxy_object, IdentifierOrValue } from './object';
 export { Value, ProxyEvent, getIdentifier } from './context';
 
 export function room(): [Context, any] {
@@ -9,9 +9,9 @@ export function room(): [Context, any] {
 }
 
 export function assimilate_object(context: Context, o: any, visited: Map<any, any>): [Identifier, any] {
-    const sym = Symbol();
+    const sym = createIdentifier();
 
-    function ass_this(ctx: Context, value: any): [Identifier | Value, any] {
+    function ass_this(ctx: Context, value: any): [IdentifierOrValue, any] {
         return assimilate_bot(ctx, value, visited);
     }
 
@@ -28,26 +28,37 @@ export function assimilate_object(context: Context, o: any, visited: Map<any, an
 export function assimilate_bot(
     context: Context,
     value: any,
-    visited: Map<any, any>): [Identifier | Value, any] {
+    visited: Map<any, [IdentifierOrValue, any]>): [IdentifierOrValue, any] {
 
-    if (visited.has(value)) {
-        return visited.get(value);
+    const alreadyVisited = visited.get(value);
+    if (alreadyVisited !== undefined) {
+        return alreadyVisited;
     }
 
     if (isTracked(value)) {
-        return [getIdentifier(value), value]
+        const identifier: IdentifierOrValue = {
+            type: 'identifier',
+            id: getIdentifier(value),
+        };
+        return [identifier, value]
     }
 
     if (typeof value === 'object') {
         const res = assimilate_object(context, value, visited);
-        visited.set(value, res);
-        return res;
+        const res_mod: [IdentifierOrValue, any] = [
+            { type: 'identifier', id: res[0], },
+            res[1]
+        ];
+        visited.set(value, res_mod);
+        return res_mod;
     }
 
-    return [value, value];
+    return [
+        { type: 'value', value: value },
+        value];
 }
 
-export function assimilate_top(context: Context, value: any): [Identifier | Value, any] {
+export function assimilate_top(context: Context, value: any): [IdentifierOrValue, any] {
     const visited = new Map();
     return assimilate_bot(context, value, visited);
 }
